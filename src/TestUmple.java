@@ -210,14 +210,16 @@ public class TestUmple {
 		if (arraySize < 1) {
 			return result;
 		} else if (arraySize == 1) {
-			return inputArray[0];
+			return "-("+inputArray[0]+exta+")-";
 		} else {
-			result = inputArray[0];
+			
+			result = "-("+inputArray[0];
 			for (int i = 1; i < arraySize; i++) {
 				result = result + " v " + inputArray[i];
 			}
+			result +=  exta+")-";
 		}
-		return result + exta;
+		return result ;
 	}
 
 }
