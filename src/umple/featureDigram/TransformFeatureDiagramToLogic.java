@@ -1,3 +1,5 @@
+package umple.featureDigram;
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -13,7 +15,9 @@ import cruise.umple.compiler.FeatureNode;
 import cruise.umple.compiler.UmpleFile;
 import cruise.umple.compiler.UmpleModel;
 import java.util.logging.Logger;
-public class TestUmple {
+
+
+public class TransformFeatureDiagramToLogic {
 
 
 	public static void main(String[] args) {
@@ -77,14 +81,14 @@ public class TestUmple {
 				String inner = getAllValid(link.getTargetFeature().get(0));
 				andGroup +=link.getTargetFeature().get(0).getName()+" ^ ";		
 				if(! inner.trim().equals(""))
-					andGroup +=" ( "+inner  +") ^ ";
+					andGroup +=" \n\t ( "+inner  +") \n\t^ ";
 
 			}
 			if(link.getFeatureConnectingOpType().equals(FeatureConnectingOpType.Optional))
 			{
 				String inner = getAllValid(link.getTargetFeature().get(0));
 				if(!inner.trim().equals(""))
-					optionalFeatures.add(link.getTargetFeature().get(0).getName() + " ^ { "+inner+"}");
+					optionalFeatures.add(link.getTargetFeature().get(0).getName() + " ^ \n\t\t( "+inner+"\t\t)\n");
 				else
 					optionalFeatures.add(link.getTargetFeature().get(0).getName() );
 			}
@@ -125,7 +129,7 @@ public class TestUmple {
 		}
 		
 	//	requiredFeatures = obatinFromList(requiredFeatures, optionalFeatures,  a -> optCombinations(a));
-		requiredFeatures += combinationsAsString( optionalFeatures.toArray(new String[optionalFeatures.size()]), " v TRUE \n");
+		requiredFeatures += combinationsAsString( optionalFeatures.toArray(new String[optionalFeatures.size()]), " v TRUE ");
 	//	requiredFeatures = obatinFromList(requiredFeatures, orFeatures,  a -> combinations(a));	//combinationsAsString
 		requiredFeatures += combinationsAsString(orFeatures.toArray(new String[orFeatures.size()]) , "\n");
 		requiredFeatures = obatinFromList(requiredFeatures, xorFeatures,  a -> combinations(a));	//xorFeatures, 
@@ -210,14 +214,14 @@ public class TestUmple {
 		if (arraySize < 1) {
 			return result;
 		} else if (arraySize == 1) {
-			return "-("+inputArray[0]+exta+")-";
+			return "("+inputArray[0]+exta+") \n";
 		} else {
 			
-			result = "-("+inputArray[0];
+			result = "("+inputArray[0];
 			for (int i = 1; i < arraySize; i++) {
 				result = result + " v " + inputArray[i];
 			}
-			result +=  exta+")-";
+			result +=  exta+") \n";
 		}
 		return result ;
 	}

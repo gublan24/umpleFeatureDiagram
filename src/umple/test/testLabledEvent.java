@@ -1,4 +1,5 @@
 
+package umple.test;
 import org.junit.jupiter.api.Test;
 
 import cruise.umple.UmpleConsoleMain;
