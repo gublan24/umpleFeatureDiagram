@@ -2,12 +2,14 @@ package umple.featureDiagram;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.StreamCorruptedException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Function;
 
+import cruise.umple.analysis.AndOpAnalyzer;
 import cruise.umple.compiler.FeatureLink;
 import cruise.umple.compiler.FeatureLink.FeatureConnectingOpType;
 import cruise.umple.compiler.FeatureModel;
@@ -16,7 +18,17 @@ import cruise.umple.compiler.UmpleFile;
 import cruise.umple.compiler.UmpleModel;
 import java.util.logging.Logger;
 
+import org.logicng.formulas.Formula;
+import org.logicng.formulas.FormulaFactory;
+import org.logicng.formulas.Literal;
+import org.logicng.formulas.Variable;
+
 public class CountFeatureSAT {
+	
+	
+	public final static String andOp = "&";
+	public final static String orOp = "|";
+
 
 	public static void main(String[] args) {
 
@@ -34,7 +46,7 @@ public class CountFeatureSAT {
 		model.generate();
 
 		try {
-			FileWriter myWriter = new FileWriter("logBerkeleySPL.txt");
+			FileWriter myWriter = new FileWriter("logEasyFeatureSPL.txt");
 			myWriter.write(s);
 			myWriter.close();
 			System.out.println("Successfully wrote to the file.");
@@ -56,61 +68,110 @@ public class CountFeatureSAT {
 		ArrayList<String> optionalFeatures = new ArrayList<String>();
 		ArrayList<String> orFeatures = new ArrayList<String>();
 		ArrayList<String> xorFeatures = new ArrayList<String>();
+		ArrayList<String> andFeatures = new ArrayList<String>();
 
 		List<FeatureLink> outgoingLinks = featureNode.getSourceFeatureLink();
 
-		String andGroup = "";
-		String extaAnd = "^";
-
 		for (FeatureLink link : outgoingLinks) {
-			if (link.getFeatureConnectingOpType().equals(FeatureConnectingOpType.Include)) {
+			String featureName = link.getTargetFeature().get(0).getName(); // get the feature name of the target.
+			FeatureConnectingOpType featureConnectionType = link.getFeatureConnectingOpType();
+
+			if (featureConnectionType.equals(FeatureConnectingOpType.Include)) {
 				String inner = getAllValid(link.getTargetFeature().get(0));
-				andGroup += link.getTargetFeature().get(0).getName() + " ^ ";
 				if (!inner.trim().equals(""))
-					andGroup += " ( " + inner + ") ^ ";
+					andFeatures.add(featureName +" " + andOp +" \n ( " + inner + " )");
+				else
+					andFeatures.add(featureName);
 
 			}
-			if (link.getFeatureConnectingOpType().equals(FeatureConnectingOpType.Optional)) {
+			if (featureConnectionType.equals(FeatureConnectingOpType.Optional)) { // return (2^n)
 				String inner = getAllValid(link.getTargetFeature().get(0));
 				if (!inner.trim().equals(""))
-					optionalFeatures.add(link.getTargetFeature().get(0).getName() + " ^ { " + inner + "}");
+					optionalFeatures.add(featureName +" " + andOp +" \n ( " + inner + " )");
 				else
-					optionalFeatures.add(link.getTargetFeature().get(0).getName());
+					optionalFeatures.add(featureName);
 			}
-			if (link.getFeatureConnectingOpType().equals(FeatureConnectingOpType.Disjunctive)) {
+			if (featureConnectionType.equals(FeatureConnectingOpType.Disjunctive)) { // return (2^n) - 1
 				String inner = getAllValid(link.getTargetFeature().get(0));
 				if (!inner.trim().equals("or")) {
-					orFeatures.add(link.getTargetFeature().get(0).getName());
+					orFeatures.add(featureName);
 				} else
 					orFeatures.add(" ^ (" + inner + ")");
 
 			}
 
-			if (link.getFeatureConnectingOpType().equals(FeatureConnectingOpType.XOR)) {
+			if (featureConnectionType.equals(FeatureConnectingOpType.XOR)) {
 				String inner = getAllValid(link.getTargetFeature().get(0));
-				if (!link.getTargetFeature().get(0).getName().trim().equals("xor")) {
-					xorFeatures.add(link.getTargetFeature().get(0).getName());
+				if (!featureName.trim().equals("xor")) {
+					xorFeatures.add(featureName);
 				} else
-					xorFeatures.add(" ^ ( " + inner + ") ");
+					xorFeatures.add(featureName +" " + andOp +" \n ( " + inner + " )");
 
 			}
 
 		}
-		if (andGroup.length() > 2 && optionalFeatures.isEmpty() && orFeatures.isEmpty()) {
-			andGroup = andGroup.substring(0, andGroup.lastIndexOf("^") - 1);
-			requiredFeatures += " " + andGroup;
-		} else {
-			requiredFeatures += " " + andGroup;
-		}
 
-		// requiredFeatures = obatinFromList(requiredFeatures, optionalFeatures, a ->
-		// optCombinations(a));
-		requiredFeatures += combinationsAsString(optionalFeatures.toArray(new String[optionalFeatures.size()]),
-				" v TRUE \n");
-		// requiredFeatures = obatinFromList(requiredFeatures, orFeatures, a ->
-		// combinations(a)); //combinationsAsString
-		requiredFeatures += combinationsAsString(orFeatures.toArray(new String[orFeatures.size()]), "\n");
-		requiredFeatures = obatinFromList(requiredFeatures, xorFeatures, a -> combinations(a)); // xorFeatures,
+		requiredFeatures = " ";
+
+		
+		String andGroup ="";
+		String optGrouo ="";
+		String xorGroup = "";
+		
+		if (andFeatures.size() > 0 )
+		{
+			for(String s : andFeatures)
+			{
+				andGroup += s + " " + andOp +" ";
+			}
+			andGroup = andGroup.substring(0,andGroup.lastIndexOf(andOp)-1);
+		}
+		if (optionalFeatures.size() > 0) {
+			ArrayList<String> result = optCombinations(optionalFeatures.toArray(new String[optionalFeatures.size()]));
+			optGrouo += "(";
+			for (String comb : result) {
+				optGrouo += comb+ orOp + "\n";
+			}
+			optGrouo = optGrouo.substring(0, optGrouo.lastIndexOf(orOp)-1);
+
+			optGrouo += ")";
+
+		}
+		
+		if (xorFeatures.size() > 0) {
+			ArrayList<String> result = optCombinations(optionalFeatures.toArray(new String[optionalFeatures.size()]));
+			xorGroup += "<<";
+			for (String comb : result) {
+				optGrouo += comb + "\n";
+			}			
+			xorGroup += ">>";
+
+		}
+		
+		String connect = "";
+		
+		if(andGroup.trim().length() > 1)
+		{
+			System.out.println(andGroup);
+			requiredFeatures+=andGroup ;
+			connect = " " + andOp + " ";
+			
+		}
+		if(optGrouo.trim().length() > 1)
+		{
+			requiredFeatures+= connect + optGrouo ;
+			connect = " " + andOp + " ";
+
+		}
+		if(xorGroup.trim().length() > 1)
+		{
+			requiredFeatures+= connect + xorGroup ;
+
+		}
+		// requiredFeatures += combinationsAsString(orFeatures.toArray(new
+		// String[orFeatures.size()]), "\n");
+		// requiredFeatures = obatinFromList(requiredFeatures, xorFeatures, a ->
+		// combinations(a)); // xorFeatures,
 
 		return requiredFeatures;
 
@@ -152,29 +213,29 @@ public class CountFeatureSAT {
 		return predicateString;
 	}
 
-	public static ArrayList<ArrayList<String>> combinations(String[] inputArray) {
-
-		ArrayList<ArrayList<String>> combinationList = new ArrayList<ArrayList<String>>();
+	public static ArrayList<String> combinations(String[] inputArray) {
+		ArrayList<String> aSolution = new ArrayList<String>();
 		// Start i at 1, so that we do not include the empty set in the results
 		for (long i = 1; i < Math.pow(2, inputArray.length); i++) {
-			ArrayList<String> portList = new ArrayList<String>();
+			String comb = "";
+
 			for (int j = 0; j < inputArray.length; j++) {
 				if ((i & (long) Math.pow(2, j)) > 0) {
 					// Include j in set
-					portList.add(inputArray[j]);
+					comb = comb + inputArray[j] + " "+andOp+" ";
 				}
 			}
-			combinationList.add(portList);
+			comb = comb.substring(0, comb.lastIndexOf(andOp)-1);
+			aSolution.add(comb);
 
 		}
-		return combinationList;
+		return aSolution;
 	}
 
-	public static ArrayList<ArrayList<String>> optCombinations(String[] inputArray) {
-		ArrayList<ArrayList<String>> combinationList = combinations(inputArray);
-		ArrayList<String> trueValueAsList = new ArrayList<String>();
-		trueValueAsList.add("TRUE");
-		combinationList.add(trueValueAsList);
+	public static ArrayList<String> optCombinations(String[] inputArray) {
+		ArrayList<String> combinationList = combinations(inputArray);
+
+		combinationList.add("TRUE ");
 		return combinationList;
 	}
 
