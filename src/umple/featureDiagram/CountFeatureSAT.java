@@ -24,11 +24,9 @@ import org.logicng.formulas.Literal;
 import org.logicng.formulas.Variable;
 
 public class CountFeatureSAT {
-	
-	
+
 	public final static String andOp = "&";
 	public final static String orOp = "|";
-
 
 	public static void main(String[] args) {
 
@@ -58,7 +56,7 @@ public class CountFeatureSAT {
 	}
 
 	public static String getAllValid(FeatureNode featureNode) {
-		String requiredFeatures = " ";
+		String logicalFormula = " ";
 
 		if (featureNode == null)
 			return "";
@@ -76,96 +74,90 @@ public class CountFeatureSAT {
 			String featureName = link.getTargetFeature().get(0).getName(); // get the feature name of the target.
 			FeatureConnectingOpType featureConnectionType = link.getFeatureConnectingOpType();
 
-			if (featureConnectionType.equals(FeatureConnectingOpType.Include)) {
-				String inner = getAllValid(link.getTargetFeature().get(0));
-				if (!inner.trim().equals(""))
-					andFeatures.add(featureName +" " + andOp +" \n ( " + inner + " )");
+			if (featureConnectionType.equals(FeatureConnectingOpType.Include)) { // This must be mandutory
+				String childFormula = getAllValid(link.getTargetFeature().get(0));
+				if (!childFormula.trim().equals(""))
+					andFeatures.add(featureName + " " + andOp + " " + childFormula + " "); // <==>
 				else
 					andFeatures.add(featureName);
 
 			}
 			if (featureConnectionType.equals(FeatureConnectingOpType.Optional)) { // return (2^n)
-				String inner = getAllValid(link.getTargetFeature().get(0));
-				if (!inner.trim().equals(""))
-					optionalFeatures.add(featureName +" " + andOp +" \n ( " + inner + " )");
+				String childFormula = getAllValid(link.getTargetFeature().get(0));
+				if (!childFormula.trim().equals(""))
+					optionalFeatures.add(featureName + " " + andOp + "  \t" + childFormula + " ");
 				else
 					optionalFeatures.add(featureName);
 			}
 			if (featureConnectionType.equals(FeatureConnectingOpType.Disjunctive)) { // return (2^n) - 1
-				String inner = getAllValid(link.getTargetFeature().get(0));
-				if (!inner.trim().equals("or")) {
+				String childFormula = getAllValid(link.getTargetFeature().get(0));
+				if (!childFormula.trim().equals("or")) {
 					orFeatures.add(featureName);
 				} else
-					orFeatures.add(" ^ (" + inner + ")");
+					orFeatures.add(" ^ " + childFormula + " ");
 
 			}
 
 			if (featureConnectionType.equals(FeatureConnectingOpType.XOR)) {
-				String inner = getAllValid(link.getTargetFeature().get(0));
+				String childFormula = getAllValid(link.getTargetFeature().get(0));
 				if (!featureName.trim().equals("xor")) {
 					xorFeatures.add(featureName);
 				} else
-					xorFeatures.add(featureName +" " + andOp +" \n ( " + inner + " )");
+					xorFeatures.add(featureName + " " + andOp + "   " + childFormula + " ");
 
 			}
 
 		}
 
-		requiredFeatures = " ";
+		logicalFormula = " ";
 
-		
-		String andGroup ="";
-		String optGrouo ="";
+		String andGroup = "";
+		String optGrouo = "";
 		String xorGroup = "";
-		
-		if (andFeatures.size() > 0 )
-		{
-			for(String s : andFeatures)
-			{
-				andGroup += s + " " + andOp +" ";
+
+		if (andFeatures.size() > 0) {
+			andGroup += "(";
+			for (String s : andFeatures) {
+				andGroup += s + " " + andOp + " ";
 			}
-			andGroup = andGroup.substring(0,andGroup.lastIndexOf(andOp)-1);
+			andGroup = andGroup.substring(0, andGroup.lastIndexOf(andOp) - 1);
+			andGroup += ")";
 		}
 		if (optionalFeatures.size() > 0) {
-			ArrayList<String> result = optCombinations(optionalFeatures.toArray(new String[optionalFeatures.size()]));
-			optGrouo += "(";
-			for (String comb : result) {
-				optGrouo += comb+ orOp + "\n";
+			optGrouo += "( (";
+			for (String comb : optionalFeatures) {
+				optGrouo += comb + orOp + " ";
 			}
-			optGrouo = optGrouo.substring(0, optGrouo.lastIndexOf(orOp)-1);
-
-			optGrouo += ")";
+			optGrouo = optGrouo.substring(0, optGrouo.lastIndexOf(orOp));
+			optGrouo += ") => " + featureNode.getName() + " ) ";
 
 		}
-		
+
 		if (xorFeatures.size() > 0) {
 			ArrayList<String> result = optCombinations(optionalFeatures.toArray(new String[optionalFeatures.size()]));
 			xorGroup += "<<";
 			for (String comb : result) {
-				optGrouo += comb + "\n";
-			}			
+				optGrouo += comb + " ";
+			}
 			xorGroup += ">>";
 
 		}
-		
+
 		String connect = "";
-		
-		if(andGroup.trim().length() > 1)
-		{
+
+		if (andGroup.trim().length() > 1) {
 			System.out.println(andGroup);
-			requiredFeatures+=andGroup ;
-			connect = " " + andOp + " ";
-			
-		}
-		if(optGrouo.trim().length() > 1)
-		{
-			requiredFeatures+= connect + optGrouo ;
+			logicalFormula += andGroup;
 			connect = " " + andOp + " ";
 
 		}
-		if(xorGroup.trim().length() > 1)
-		{
-			requiredFeatures+= connect + xorGroup ;
+		if (optGrouo.trim().length() > 1) {
+			logicalFormula += connect + optGrouo;
+			connect = " " + andOp + " ";
+
+		}
+		if (xorGroup.trim().length() > 1) {
+			logicalFormula += connect + xorGroup;
 
 		}
 		// requiredFeatures += combinationsAsString(orFeatures.toArray(new
@@ -173,7 +165,9 @@ public class CountFeatureSAT {
 		// requiredFeatures = obatinFromList(requiredFeatures, xorFeatures, a ->
 		// combinations(a)); // xorFeatures,
 
-		return requiredFeatures;
+		if (logicalFormula.trim().length() > 0)
+			logicalFormula = "(" + logicalFormula + ")\n";
+		return logicalFormula;
 
 	}
 
@@ -222,10 +216,10 @@ public class CountFeatureSAT {
 			for (int j = 0; j < inputArray.length; j++) {
 				if ((i & (long) Math.pow(2, j)) > 0) {
 					// Include j in set
-					comb = comb + inputArray[j] + " "+andOp+" ";
+					comb = comb + inputArray[j] + " " + andOp + " ";
 				}
 			}
-			comb = comb.substring(0, comb.lastIndexOf(andOp)-1);
+			comb = comb.substring(0, comb.lastIndexOf(andOp) - 1);
 			aSolution.add(comb);
 
 		}
@@ -245,14 +239,14 @@ public class CountFeatureSAT {
 		if (arraySize < 1) {
 			return result;
 		} else if (arraySize == 1) {
-			return "-(" + inputArray[0] + exta + ")-";
+			return "(" + inputArray[0] + exta + ")";
 		} else {
 
-			result = "-(" + inputArray[0];
+			result = "(" + inputArray[0];
 			for (int i = 1; i < arraySize; i++) {
-				result = result + " v " + inputArray[i];
+				result = result + " " + orOp + " " + inputArray[i];
 			}
-			result += exta + ")-";
+			result += exta + ")";
 		}
 		return result;
 	}
