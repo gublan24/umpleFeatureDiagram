@@ -17,7 +17,7 @@ import cruise.umple.compiler.UmpleModel;
 import java.util.logging.Logger;
 
 public class TransformFeatureDiagramToLogic {
-
+/*
 	public static void main(String[] args) {
 
 		UmpleFile umpfile = new UmpleFile("BerkeleySPL.ump");
@@ -196,5 +196,5 @@ public class TransformFeatureDiagramToLogic {
 		}
 		return result;
 	}
-
+*/
 }
