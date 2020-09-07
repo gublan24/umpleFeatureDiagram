@@ -1,9 +1,10 @@
-((IIO))
+Persistance & (( Persistance => IIO ) & ( IIO => Persistance ))
 
-&(( ( ( OldIO & ~ NewIO)| ( NewIO & ~ OldIO)) & IIO ) )
+ & ((IIO => (( OldIO  &  ~ NewIO) |  ( NewIO  &  ~ OldIO)))  & (( OldIO => IIO) & ( NewIO => IIO)))
 
-&((IO) & ( (SynchronizedIO)=> OldIO ) )
+ & 
+ & (( OldIO => IO ) & ( IO => OldIO )  &  ( (SynchronizedIO) => OldIO ) )
 
-&((NIOAccess) & ( (DirectNIO)=> NewIO ) )
+ & (( NewIO => NIOAccess ) & ( NIOAccess => NewIO )  &  ( (DirectNIO) => NewIO ) )
 
-&(( ( ( ChunckedNIO & ~ NIO)| ( NIO & ~ ChunckedNIO)) & NIOAccess ) )
+ & ((NIOAccess => (( ChunckedNIO  &  ~ NIO) |  ( NIO  &  ~ ChunckedNIO)))  & (( ChunckedNIO => NIOAccess) & ( NIO => NIOAccess)))
