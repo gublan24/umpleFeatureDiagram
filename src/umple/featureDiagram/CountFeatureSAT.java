@@ -25,7 +25,7 @@ public class CountFeatureSAT {
 
 	public static void main(String[] args) {
 
-		UmpleFile umpfile = new UmpleFile("BerkeleySPL.ump");
+		UmpleFile umpfile = new UmpleFile("FeatureModelWith_opt_xor.ump");
 		UmpleModel model = new UmpleModel(umpfile); // CompoundFeatureNode l;
 		UmpleInternalParser pp;
 		FeatureNode d;
@@ -51,8 +51,11 @@ public class CountFeatureSAT {
 
 	}
 	private static String getPropostionalFormualFromRootFeatureNode(FeatureNode rootNode) {
-		return rootNode.getName() + AND_OP + getProppositionalLogicFromFeatureNode(rootNode);
+		
+		return rootNode.getName() + AND_OP + getProppositionalLogicFromFeatureNode(rootNode)+AND_OP+formLogicalSentence(nestedFeatures, AND_OP);
 	}
+	static ArrayList<String> nestedFeatures = new ArrayList<String>();
+
 	public static String getProppositionalLogicFromFeatureNode(FeatureNode featureNode) {
 		String propositionalFormula = "";
 		if (featureNode == null)
@@ -117,12 +120,7 @@ public class CountFeatureSAT {
 			// prepare xor to be only one value
 			ArrayList<String> xorComb = xorCombinations(xorFeatures);
 			childImp = formLogicalImp(featureNode, xorFeatures, AND_OP);
-			xorGroup = "(" + featureNode.getName() + IMP_OP + formLogicalSentence(featureNode, xorComb, OR_OP); // convert
-																												// xor
-																												// to
-																												// ORs
-																												// of
-																												// ands.
+			xorGroup = "(" + featureNode.getName() + IMP_OP + formLogicalSentence(xorComb, OR_OP);
 			xorGroup += ") " + AND_OP + childImp;
 		}
 		if(includeFeatures.size() > 0)
@@ -132,7 +130,6 @@ public class CountFeatureSAT {
 
 		String connect = "";
 		if (andGroup.trim().length() > 1) {
-			System.out.println(andGroup);
 			propositionalFormula += andGroup;
 			connect = " " + AND_OP + " ";
 		}
@@ -142,17 +139,20 @@ public class CountFeatureSAT {
 		}
 		if (xorGroup.trim().length() > 1) {
 			propositionalFormula += connect + xorGroup;
+			connect = " " + AND_OP + " ";
 		}
 
 		if (propositionalFormula.trim().length() > 0)
 			propositionalFormula = "(" + propositionalFormula + ")\n";
-
+	
 		for (FeatureLink aFeatureLink : featureNode.getOutgoingFeatureLinks()) {
 			String aLogicalFormula = getProppositionalLogicFromFeatureNode(aFeatureLink.getTargetFeatureNode());
-			if (aLogicalFormula.trim().isEmpty())
+			if (aLogicalFormula.trim().equals(""))
 				continue;
-			propositionalFormula += "\n" + AND_OP + aLogicalFormula;
-		}
+			nestedFeatures.add(aLogicalFormula);
+			propositionalFormula += "\t";
+
+		}		
 		return propositionalFormula;
 
 	}
@@ -164,7 +164,7 @@ public class CountFeatureSAT {
 		}
 	}
 
-	private static String formLogicalSentence(FeatureNode featureNode, ArrayList<String> featureList, String joinOp) {
+	private static String formLogicalSentence( ArrayList<String> featureList, String joinOp) {
 		String sentence = "(";
 		for (String featureName : featureList) {
 			sentence += featureName + joinOp + " ";
@@ -213,7 +213,7 @@ public class CountFeatureSAT {
 	private static String formLogicalSentenceWithImplicationToSource(FeatureNode featureNode,
 			ArrayList<String> optionalFeatures, String joinOp) {
 		String sentence = "( ";
-		sentence += formLogicalSentence(featureNode, optionalFeatures, joinOp);
+		sentence += formLogicalSentence(optionalFeatures, joinOp);
 		sentence += " => " + featureNode.getName() + " ) ";
 		return sentence;
 	}

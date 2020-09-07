@@ -1,10 +1,6 @@
 Persistance & (( Persistance => IIO ) & ( IIO => Persistance ))
-
- & ((IIO => (( OldIO  &  ~ NewIO) |  ( NewIO  &  ~ OldIO)))  & (( OldIO => IIO) & ( NewIO => IIO)))
-
- & 
- & (( OldIO => IO ) & ( IO => OldIO )  &  ( (SynchronizedIO) => OldIO ) )
-
- & (( NewIO => NIOAccess ) & ( NIOAccess => NewIO )  &  ( (DirectNIO) => NewIO ) )
-
- & ((NIOAccess => (( ChunckedNIO  &  ~ NIO) |  ( NIO  &  ~ ChunckedNIO)))  & (( ChunckedNIO => NIOAccess) & ( NIO => NIOAccess)))
+	 & ((( OldIO => IO ) & ( IO => OldIO )  &  ( (SynchronizedIO) => OldIO ) )
+ &  ((NIOAccess => (( ChunckedNIO  &  ~ NIO) |  ( NIO  &  ~ ChunckedNIO)))  & (( ChunckedNIO => NIOAccess) & ( NIO => NIOAccess)))
+ &  (( NewIO => NIOAccess ) & ( NIOAccess => NewIO )  &  ( (DirectNIO) => NewIO ) )
+	 &  ((IIO => (( OldIO  &  ~ NewIO) |  ( NewIO  &  ~ OldIO)))  & (( OldIO => IIO) & ( NewIO => IIO)))
+)
