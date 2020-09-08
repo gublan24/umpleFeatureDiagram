@@ -16,7 +16,6 @@ import org.logicng.solvers.SATSolver;
 import cruise.umple.compiler.FeatureModel;
 import cruise.umple.compiler.FeatureNode;
 import cruise.umple.compiler.UmpleFile;
-import cruise.umple.compiler.UmpleInternalParser;
 import cruise.umple.compiler.UmpleModel;
 import umple.featureDiagram.FeatureModelPropositionalGenerator;
 
@@ -25,16 +24,6 @@ class TestTestFeatureModelToPropositionalLogic {
 	final FormulaFactory f = new FormulaFactory();
 	final PropositionalParser p = new PropositionalParser(f);
 
-	@Test
-	void test() {
-		UmpleFile umpfile = new UmpleFile("reqSt.ump");
-		UmpleModel model = new UmpleModel(umpfile);	
-		UmpleInternalParser pp;
-		FeatureNode d;
-		model.setShouldGenerate(true);
-		model.run();
-		FeatureModel fmodel = model.getFeatureModel();
-	}
 	
 	@Test
 	public void testOptinalSPLPropositinalGenerator()
@@ -125,7 +114,7 @@ class TestTestFeatureModelToPropositionalLogic {
 			miniSat.add(formula);
 			List<Assignment> assignList= miniSat.enumerateAllModels();
 			int solutionCount = assignList.size();
-			assertEquals(10, solutionCount);			
+			assertEquals(6, solutionCount);			
 		} catch (ParserException e) {
 			  fail(e.getMessage());
 		}
