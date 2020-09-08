@@ -1,0 +1,3 @@
+require subfeature [ Hello and Beautiful and Wonderful and World];
+require subfeature [ _Hello or _Beautiful or _Wonderful or _World];
+require subfeature [ opt O_Hello opt O_Beautiful opt O_Wonderful opt O_World];

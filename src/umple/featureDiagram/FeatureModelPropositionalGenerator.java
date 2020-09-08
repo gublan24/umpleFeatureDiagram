@@ -45,7 +45,7 @@ public class FeatureModelPropositionalGenerator {
 		}
 
 	}
-	private static String getPropostionalFormualFromRootFeatureNode(FeatureNode rootNode) {
+	public static String getPropostionalFormualFromRootFeatureNode(FeatureNode rootNode) {
 		
 		return rootNode.getName() + AND_OP + getProppositionalLogicFromFeatureNode(rootNode);
 	}
@@ -153,7 +153,7 @@ public class FeatureModelPropositionalGenerator {
 		}
 
 		if (propositionalFormula.trim().length() > 0)
-			propositionalFormula +="\n";// "(" + propositionalFormula + ")\n";
+			propositionalFormula +="\n";
 	
 		for (FeatureLink aFeatureLink : featureNode.getOutgoingFeatureLinks()) {
 			String aLogicalFormula = getProppositionalLogicFromFeatureNode(aFeatureLink.getTargetFeatureNode());
@@ -243,41 +243,7 @@ public class FeatureModelPropositionalGenerator {
 		return sentence;
 	}
 
-	private static String obatinFromList(String predicateString, ArrayList<String> featureArrayList,
-			Function<String[], List<ArrayList<String>>> combinationMrthod) {
-		if (featureArrayList.size() > 0) {
-			String[] featureAsArray = new String[featureArrayList.size()];
-			for (int i = 0; i < featureAsArray.length; i++) {
-				featureAsArray[i] = featureArrayList.get(i);
-			}
 
-			List<ArrayList<String>> allCombinationOfInputList = combinationMrthod.apply(featureAsArray);
-			if (allCombinationOfInputList.size() > 0) {
-				predicateString += " [ ";
-
-				for (ArrayList<String> solution : allCombinationOfInputList) {
-					predicateString += " ( ";
-					for (String single : solution) {
-						predicateString += "  " + single.toString();
-						if (solution.indexOf(single) + 1 != solution.size())
-							predicateString += " ^ ";
-					}
-					predicateString += " ) ";
-					if (allCombinationOfInputList.indexOf(solution) + 1 != allCombinationOfInputList.size())
-
-						predicateString += " v ";
-					predicateString += " \n ";
-
-				}
-
-				predicateString += " ] ";
-
-			}
-			predicateString += " \n ";
-
-		}
-		return predicateString;
-	}
 
 	public static ArrayList<String> combinations(List<String> inputArray) {
 		ArrayList<String> aSolution = new ArrayList<String>();
@@ -317,12 +283,6 @@ public class FeatureModelPropositionalGenerator {
 		}
 		return aSolution;
 	}
-//	public static ArrayList<String> optCombinations(String[] inputArray) {
-//		ArrayList<String> combinationList = combinations(inputArray);
-//
-//		combinationList.add("TRUE ");
-//		return combinationList;
-//	}
 
 	public static String combinationsAsString(String[] inputArray, String exta) {
 		String result = "";

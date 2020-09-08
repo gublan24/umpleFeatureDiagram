@@ -1,0 +1,6 @@
+require subfeature [ Hello or Beautiful or Wonderful or World];
+
+class A
+{
+
+}

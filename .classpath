@@ -3,16 +3,9 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/5"/>
-	<classpathentry kind="lib" path="C:/Users/abdulaziz/.m2/repository/org/logicng/logicng/2.0.0/logicng-2.0.0.jar" sourcepath="C:/Users/abdulaziz/.m2/repository/org/logicng/logicng/2.0.0/logicng-2.0.0-sources.jar">
-		<attributes>
-			<attribute name="maven.pomderived" value="true"/>
-			<attribute name="maven.groupId" value="org.logicng"/>
-			<attribute name="maven.artifactId" value="logicng"/>
-			<attribute name="maven.version" value="2.0.0"/>
-			<attribute name="maven.scope" value="compile"/>
-		</attributes>
-	</classpathentry>
 	<classpathentry kind="lib" path="//wsl/Ubuntu-20.04/home/abdulaziz/umple/dist"/>
 	<classpathentry kind="lib" path="//wsl/Ubuntu-20.04/home/abdulaziz/umple/dist/umple-1.30.1.5099.60569f335.jar" sourcepath="//wsl/Ubuntu-20.04/home/abdulaziz/umple"/>
+	<classpathentry kind="lib" path="C:/Users/abdulaziz/.m2/repository/org/logicng/logicng/2.0.0/logicng-2.0.0.jar"/>
+	<classpathentry kind="lib" path="C:/Users/abdulaziz/.m2/repository/org/antlr/antlr4-runtime/4.8/antlr4-runtime-4.8.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -14,7 +14,6 @@ class Main {
   }  
 }
 
-
 class Main {   
   mixset Hello {
     after Hello_label: main(String ) {
@@ -37,15 +36,7 @@ use Hello;
 use Wonderful;
 use World;
 
-require subfeature [ Hello];
+require subfeature [ opt Hello];
 require subfeature [ opt Beautiful];
 require subfeature [ opt Wonderful];
 require subfeature [ opt World];
-
-
-mixset Hello {
-
-require subfeature [ A];
-require subfeature [ B];
-require subfeature [ C];
-}
