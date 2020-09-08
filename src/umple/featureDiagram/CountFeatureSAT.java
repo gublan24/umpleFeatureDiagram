@@ -2,9 +2,7 @@ package umple.featureDiagram;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
@@ -13,7 +11,6 @@ import cruise.umple.compiler.FeatureLink.FeatureConnectingOpType;
 import cruise.umple.compiler.FeatureModel;
 import cruise.umple.compiler.FeatureNode;
 import cruise.umple.compiler.UmpleFile;
-import cruise.umple.compiler.UmpleInternalParser;
 import cruise.umple.compiler.UmpleModel;
 
 public class CountFeatureSAT {
@@ -27,8 +24,7 @@ public class CountFeatureSAT {
 
 		UmpleFile umpfile = new UmpleFile("featureDependencySPL.ump");
 		UmpleModel model = new UmpleModel(umpfile); // CompoundFeatureNode l;
-		UmpleInternalParser pp;
-		FeatureNode d;
+
 		model.setShouldGenerate(true);
 		model.run();
 		FeatureModel fmodel = model.getFeatureModel();
@@ -36,7 +32,6 @@ public class CountFeatureSAT {
 		FeatureNode rootNode = fmodel.getNode().get(0);
 		String featureModelLogicalFormualAsString = getPropostionalFormualFromRootFeatureNode(rootNode) ;
 
-		FeatureLink fLink;
 		model.generate();
 
 		try {
@@ -52,48 +47,47 @@ public class CountFeatureSAT {
 	}
 	private static String getPropostionalFormualFromRootFeatureNode(FeatureNode rootNode) {
 		
-		return rootNode.getName() + AND_OP + getProppositionalLogicFromFeatureNode(rootNode)+AND_OP+formLogicalSentence(nestedFeatures, AND_OP);
+		return rootNode.getName() + AND_OP + getProppositionalLogicFromFeatureNode(rootNode);
 	}
-	static ArrayList<String> nestedFeatures = new ArrayList<String>();
 
 	public static String getProppositionalLogicFromFeatureNode(FeatureNode featureNode) {
 		String propositionalFormula = "";
 		if (featureNode == null)
 			return propositionalFormula;
-		
+		else if(featureNode.getOutgoingFeatureLinks().size() < 1)
+			return propositionalFormula;
+
 		ArrayList<String> optionalFeatures = new ArrayList<String>();
-		ArrayList<String> orFeatures = new ArrayList<String>();
+		ArrayList<String> orFeatures= new ArrayList<String>();
 		ArrayList<String> xorFeatures = new ArrayList<String>();
 		ArrayList<String> mandatoryFeatures = new ArrayList<String>();
 		ArrayList<String> includeExcludeFeatures = new ArrayList<String>();
 		
-		List<FeatureLink> outgoingLinks = featureNode.getOutgoingFeatureLinks();
-
-		for (FeatureLink aFeatureLink : outgoingLinks) {
-
-			String featureName = aFeatureLink.getTargetFeatureNode().getName();
+		for (FeatureLink aFeatureLink : featureNode.getOutgoingFeatureLinks()) {
+			String sourceFeatureName = aFeatureLink.getSourceFeatureNode().getName();
+			String targetFeatureName = aFeatureLink.getTargetFeatureNode().getName();
 			FeatureConnectingOpType featureConnectionType = aFeatureLink.getFeatureConnectingOpType();
 
 			if (featureConnectionType.equals(FeatureConnectingOpType.Include)) {
-				includeExcludeFeatures.add(aFeatureLink.getSourceFeatureNode().getName() +IMP_OP + aFeatureLink.getTargetFeatureNode().getName());
+				includeExcludeFeatures.add(sourceFeatureName + IMP_OP + targetFeatureName);
 			}
 			if (featureConnectionType.equals(FeatureConnectingOpType.Exclude)) {
-				includeExcludeFeatures.add(aFeatureLink.getSourceFeatureNode().getName() +IMP_OP +"~"+ aFeatureLink.getTargetFeatureNode().getName());
+				includeExcludeFeatures.add(sourceFeatureName + IMP_OP + NEG_OP + targetFeatureName);
 			}
 			if (featureConnectionType.equals(FeatureConnectingOpType.Mandatory)) {
-				mandatoryFeatures.add(featureName);
+				mandatoryFeatures.add(targetFeatureName);
 			}
-			if (featureConnectionType.equals(FeatureConnectingOpType.Optional)) { // return (2^n)
-				optionalFeatures.add(featureName);
+			if (featureConnectionType.equals(FeatureConnectingOpType.Optional)) { 
+				optionalFeatures.add(targetFeatureName);
 			}	
 			if (aFeatureLink.getTargetFeatureNode().getName().equals("and")) {
-				retreiveFeatureNamesAsStringList(mandatoryFeatures, aFeatureLink);
+				mandatoryFeatures.addAll(obtainFeatureNamesAsStringList(aFeatureLink));
 			}
-			if (aFeatureLink.getTargetFeatureNode().getName().equals("or")) { // return (2^n) - 1
-				retreiveFeatureNamesAsStringList(orFeatures, aFeatureLink);
+			if (aFeatureLink.getTargetFeatureNode().getName().equals("or")) { 
+				orFeatures.addAll(obtainFeatureNamesAsStringList(aFeatureLink));
 			}
 			if (aFeatureLink.getTargetFeatureNode().getName().equals("xor")) {
-				retreiveFeatureNamesAsStringList(xorFeatures, aFeatureLink);
+				xorFeatures.addAll(obtainFeatureNamesAsStringList(aFeatureLink));
 			}
 
 		}
@@ -104,16 +98,18 @@ public class CountFeatureSAT {
 		String orGroup = "";
 		String childImp = "";
 		String inExcludeGroup = "";
-
-
+		
+		//process mandatory features
 		if (mandatoryFeatures.size() > 0) {
 			andGroup = formLogicalImpFromSourceToChild(featureNode, mandatoryFeatures, AND_OP);
 			childImp = formLogicalImp(featureNode, mandatoryFeatures, AND_OP);
 			andGroup += AND_OP + childImp;
 		}
+		//process optional features
 		if (optionalFeatures.size() > 0) {
 			optGroup = formLogicalSentenceWithImplicationToSource(featureNode, optionalFeatures, OR_OP);
 		}
+		//process xor features
 		if (xorFeatures.size() > 0) {
 			// prepare xor to be only one value
 			ArrayList<String> xorComb = xorCombinations(xorFeatures);
@@ -121,70 +117,87 @@ public class CountFeatureSAT {
 			xorGroup = "(" + featureNode.getName() + IMP_OP + formLogicalSentence(xorComb, OR_OP);
 			xorGroup += ") " + AND_OP + childImp;
 		}
+		//process or features
 		if (orFeatures.size() > 0) {
 			childImp = formLogicalImp(featureNode, orFeatures, AND_OP);
 			orGroup = "(" + featureNode.getName() + IMP_OP + formLogicalSentence(orFeatures, OR_OP);
 			orGroup += ") " + AND_OP + childImp;
 		}
+		//process include/exclude features
 		if(includeExcludeFeatures.size() > 0)
 		{
-			inExcludeGroup=formLogicalSentence(includeExcludeFeatures, AND_OP);
+			inExcludeGroup=formLogicalSentence(includeExcludeFeatures, AND_OP,true);
 		}
 
 		String connect = "";
 		if (andGroup.trim().length() > 1) {
 			propositionalFormula += andGroup;
-			connect = " " + AND_OP + " ";
+			connect = AND_OP;
 		}
 		if (optGroup.trim().length() > 1) {
 			propositionalFormula += connect + optGroup;
-			connect = " " + AND_OP + " ";
+			connect = AND_OP;
 		}
 		if (xorGroup.trim().length() > 1) {
 			propositionalFormula += connect + xorGroup;
-			connect = " " + AND_OP + " ";
+			connect = AND_OP;
+
 		}
 		if (orGroup.trim().length() > 1) {
 			propositionalFormula += connect + orGroup;
-			connect = " " + AND_OP + " ";
+			connect = AND_OP;
 		}
 		if (inExcludeGroup.trim().length() > 1) {
 			propositionalFormula += connect + inExcludeGroup;
-			connect = " " + AND_OP + " ";
+			connect = AND_OP;
 		}
 
 		if (propositionalFormula.trim().length() > 0)
-			propositionalFormula = "(" + propositionalFormula + ")\n";
+			propositionalFormula +="\n";// "(" + propositionalFormula + ")\n";
 	
 		for (FeatureLink aFeatureLink : featureNode.getOutgoingFeatureLinks()) {
 			String aLogicalFormula = getProppositionalLogicFromFeatureNode(aFeatureLink.getTargetFeatureNode());
 			if (aLogicalFormula.trim().equals(""))
 				continue;
-			nestedFeatures.add(aLogicalFormula);
-			//propositionalFormula += "\t";
-
+			if(propositionalFormula.endsWith(AND_OP))
+				propositionalFormula += aLogicalFormula;
+			else
+			propositionalFormula += AND_OP + aLogicalFormula;
 		}		
 		return propositionalFormula;
 
 	}
-	private static void retreiveFeatureNamesAsStringList(ArrayList<String> innerFeatures, FeatureLink aFeatureLink) {
+	private static List<String> obtainFeatureNamesAsStringList(FeatureLink aFeatureLink) {
+		ArrayList<String> innerFeatures = new ArrayList<String>();
 		FeatureNode targetFeatureNode = aFeatureLink.getTargetFeatureNode();
 		List<FeatureLink> outgoingFeatureLinks = targetFeatureNode.getOutgoingFeatureLinks();
 		for (FeatureLink targetFeatureLink : outgoingFeatureLinks) {
 			innerFeatures.add(targetFeatureLink.getTargetFeatureNode().getName());
 		}
+		return innerFeatures;
 		
 	}
-
-	private static String formLogicalSentence( ArrayList<String> featureList, String joinOp) {
+	
+	private static String formLogicalSentence( ArrayList<String> featureList, String joinOp , boolean withBracket) {
 		String sentence = "(";
+		String openBracket = "";
+		String closeBracket = " ";
+		if (withBracket && featureList.size()> 1 ) {
+			openBracket = "(";
+			closeBracket = ")";
+		}
+		
 		for (String featureName : featureList) {
-			sentence += featureName + joinOp + " ";
+			sentence += openBracket+featureName + closeBracket + joinOp ;
 		}
 		if (featureList.size() > 0)
 			sentence = sentence.substring(0, sentence.lastIndexOf(joinOp));
 		sentence += ")";
 		return sentence;
+	}
+
+	private static String formLogicalSentence( ArrayList<String> featureList, String joinOp) {
+		return formLogicalSentence(featureList,joinOp,false);
 	}
 
 	private static String formLogicalImpFromSourceToChild(FeatureNode featureNode, ArrayList<String> featureList,
