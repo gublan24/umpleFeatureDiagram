@@ -75,7 +75,7 @@ public class CountFeatureSAT {
 			FeatureConnectingOpType featureConnectionType = aFeatureLink.getFeatureConnectingOpType();
 
 			if (featureConnectionType.equals(FeatureConnectingOpType.Include)) {
-				includeExcludeFeatures.add(aFeatureLink.getSourceFeatureNode().getName() +IMP_OP+aFeatureLink.getTargetFeatureNode().getName());
+				includeExcludeFeatures.add(aFeatureLink.getSourceFeatureNode().getName() +IMP_OP + aFeatureLink.getTargetFeatureNode().getName());
 			}
 			if (featureConnectionType.equals(FeatureConnectingOpType.Exclude)) {
 				includeExcludeFeatures.add(aFeatureLink.getSourceFeatureNode().getName() +IMP_OP +"~"+ aFeatureLink.getTargetFeatureNode().getName());
@@ -103,7 +103,7 @@ public class CountFeatureSAT {
 		String xorGroup = "";
 		String orGroup = "";
 		String childImp = "";
-		String includeGroup = "";
+		String inExcludeGroup = "";
 
 
 		if (mandatoryFeatures.size() > 0) {
@@ -128,7 +128,7 @@ public class CountFeatureSAT {
 		}
 		if(includeExcludeFeatures.size() > 0)
 		{
-			includeGroup=formLogicalSentence(includeExcludeFeatures, AND_OP);
+			inExcludeGroup=formLogicalSentence(includeExcludeFeatures, AND_OP);
 		}
 
 		String connect = "";
@@ -148,8 +148,8 @@ public class CountFeatureSAT {
 			propositionalFormula += connect + orGroup;
 			connect = " " + AND_OP + " ";
 		}
-		if (includeGroup.trim().length() > 1) {
-			propositionalFormula += connect + includeGroup;
+		if (inExcludeGroup.trim().length() > 1) {
+			propositionalFormula += connect + inExcludeGroup;
 			connect = " " + AND_OP + " ";
 		}
 
@@ -168,9 +168,9 @@ public class CountFeatureSAT {
 
 	}
 	private static void retreiveFeatureNamesAsStringList(ArrayList<String> innerFeatures, FeatureLink aFeatureLink) {
-		FeatureNode andTarget = aFeatureLink.getTargetFeatureNode();
-		List<FeatureLink> andLinks = andTarget.getOutgoingFeatureLinks();
-		for (FeatureLink targetFeatureLink : andLinks) {
+		FeatureNode targetFeatureNode = aFeatureLink.getTargetFeatureNode();
+		List<FeatureLink> outgoingFeatureLinks = targetFeatureNode.getOutgoingFeatureLinks();
+		for (FeatureLink targetFeatureLink : outgoingFeatureLinks) {
 			innerFeatures.add(targetFeatureLink.getTargetFeatureNode().getName());
 		}
 		
