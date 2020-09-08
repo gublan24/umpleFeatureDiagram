@@ -13,7 +13,7 @@ import cruise.umple.compiler.FeatureNode;
 import cruise.umple.compiler.UmpleFile;
 import cruise.umple.compiler.UmpleModel;
 
-public class CountFeatureSAT {
+public class FeatureModelPropositionalGenerator {
 
 	public final static String AND_OP = " & ";
 	public final static String OR_OP = " | ";
